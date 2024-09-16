@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeCoverageLab</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+        }
+        header {
+            background-color: #006400;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        #editor, #console {
+            width: 90%;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #editor {
+            height: 250px;
+        }
+        #console {
+            height: 150px;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #006400;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #004d00;
+        }
+        footer {
+            margin-top: 30px;
+            padding: 10px 0;
+            background-color: #f4f4f9;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        .coverage {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e8e8e8;
+            border-radius: 8px;
+            width: 90%;
+            margin: 20px auto;
+            text-align: left;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>CodeCoverageLab</h1>
+</header>
+
+<div id="editor">/* Tapez votre code ici */</div>
+
+<button id="runCode">Exécuter le code</button>
+
+<h2>Console Output:</h2>
+<pre id="console"></pre>
+
+<h2>Couverture:</h2>
+<pre class="coverage" id="coverage"></pre>
+
+<footer>
+    Copyright Belhaj Ouajdi 2024
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script>
+    // Initialisation de l'éditeur
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chrome");
+    editor.session.setMode("ace/mode/javascript");
+
+    // Redirection de la console
+    var originalConsole = console.log;
+    console.log = function(message) {
+        document.getElementById('console').textContent += message + "\n";
+    };
+
+    // Fonction améliorée pour compter les branches
+    function countBranches(code) {
+        let branchCount = 0;
+
+        // Diviser le code en lignes
+        const lines = code.split('\n');
+
+        // Parcourir chaque ligne et analyser le contenu
+        lines.forEach(line => {
+            line = line.trim();
+            // Comptage des branches
+            if (line.startsWith('if') || line.startsWith('else') || line.startsWith('switch') || line.startsWith('case')) {
+                branchCount++;
+            }
+        });
+
+        return { branchCount };
+    }
+
+    document.getElementById('runCode').addEventListener('click', function() {
+        var code = editor.getValue();
+
+        // Réinitialiser la console
+        document.getElementById('console').textContent = "";
+
+        // Exécution du code
+        try {
+            eval(code);  // Utilisation de eval() pour exécuter le code
+        } catch (error) {
+            console.log("Erreur : " + error.message);
+        }
+
+        // Compter les branches
+        const coverage = countBranches(code);
+        document.getElementById('coverage').textContent =
+            `Total Number of Branches: ${coverage.branchCount}`;
+    });
+</script>
+
+</body>
+</html>
