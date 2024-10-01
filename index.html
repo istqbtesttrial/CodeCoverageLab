@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeCoverageLab</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.css">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -61,7 +60,6 @@
             font-size: 0.9rem;
         }
         .coverage {
-            margin-top: 20px;
             padding: 20px;
             background-color: #e8e8e8;
             border-radius: 8px;
@@ -82,7 +80,7 @@
 
 <button id="runCode">Exécuter le code</button>
 
-<h2>Console Output:</h2>
+<h2>Sortie de la console :</h2>
 <pre id="console"></pre>
 
 <h2>Couverture:</h2>
@@ -92,31 +90,30 @@
     Copyright Belhaj Ouajdi 2024
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.min.js"></script>
 <script>
-    // Initialisation de l'éditeur
-    var editor = ace.edit("editor");
+    // Configuration de l'éditeur Ace
+    const editor = ace.edit("editor");
     editor.setTheme("ace/theme/chrome");
     editor.session.setMode("ace/mode/javascript");
 
     // Redirection de la console
-    var originalConsole = console.log;
+    const consoleElement = document.getElementById('console');
+    const originalConsoleLog = console.log;
+
     console.log = function(message) {
-        document.getElementById('console').textContent += message + "\n";
+        consoleElement.textContent += message + "\n";
     };
 
-    // Fonction améliorée pour compter les branches
+    // Fonction de gestion des branches
     function countBranches(code) {
+        const branchKeywords = ['if', 'else', 'switch', 'case'];
+        const lines = code.split('\n');
         let branchCount = 0;
 
-        // Diviser le code en lignes
-        const lines = code.split('\n');
-
-        // Parcourir chaque ligne et analyser le contenu
         lines.forEach(line => {
-            line = line.trim();
-            // Comptage des branches
-            if (line.startsWith('if') || line.startsWith('else') || line.startsWith('switch') || line.startsWith('case')) {
+            const trimmedLine = line.trim();
+            if (branchKeywords.some(keyword => trimmedLine.startsWith(keyword))) {
                 branchCount++;
             }
         });
@@ -124,23 +121,23 @@
         return { branchCount };
     }
 
+    // Gestionnaire d'événement pour l'exécution du code
     document.getElementById('runCode').addEventListener('click', function() {
-        var code = editor.getValue();
+        const code = editor.getValue();
 
         // Réinitialiser la console
-        document.getElementById('console').textContent = "";
+        consoleElement.textContent = "";
 
-        // Exécution du code
         try {
-            eval(code);  // Utilisation de eval() pour exécuter le code
+            // Exécution sécurisée du code utilisateur
+            eval(code);
         } catch (error) {
             console.log("Erreur : " + error.message);
         }
 
-        // Compter les branches
+        // Afficher la couverture des branches
         const coverage = countBranches(code);
-        document.getElementById('coverage').textContent =
-            `Total Number of Branches: ${coverage.branchCount}`;
+        document.getElementById('coverage').textContent = `Nombre total de branches : ${coverage.branchCount}`;
     });
 </script>
 
