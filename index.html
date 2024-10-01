@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeCoverageLab</title>
     <style>
         body {
@@ -38,6 +37,7 @@
             color: white;
             padding: 10px;
             overflow-y: auto;
+            text-align: left;
         }
         button {
             background-color: #006400;
@@ -83,21 +83,24 @@
 <h2>Sortie de la console :</h2>
 <pre id="console"></pre>
 
-<h2>Couverture:</h2>
+<h2>Couverture :</h2>
 <pre class="coverage" id="coverage"></pre>
 
 <footer>
-    Copyright Belhaj Ouajdi 2024
+    &copy; Belhaj Ouajdi 2024
 </footer>
 
+<!-- Inclusion de l'éditeur Ace -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.min.js"></script>
+<!-- Inclusion d'Esprima 4.0.1 -->
+<script src="https://cdn.jsdelivr.net/npm/esprima@4.0.1/dist/esprima.min.js"></script>
 <script>
     // Configuration de l'éditeur Ace
     const editor = ace.edit("editor");
     editor.setTheme("ace/theme/chrome");
     editor.session.setMode("ace/mode/javascript");
 
-    // Redirection de la console
+    // Redirection des logs console pour les afficher dans l'interface utilisateur
     const consoleElement = document.getElementById('console');
     const originalConsoleLog = console.log;
 
@@ -105,39 +108,97 @@
         consoleElement.textContent += message + "\n";
     };
 
-    // Fonction de gestion des branches
-    function countBranches(code) {
-        const branchKeywords = ['if', 'else', 'switch', 'case'];
-        const lines = code.split('\n');
+    // Fonction pour compter les branches et instructions en utilisant Esprima
+    function countBranchesAndInstructions(code) {
         let branchCount = 0;
+        let instructionCount = 0;
 
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
-            if (branchKeywords.some(keyword => trimmedLine.startsWith(keyword))) {
-                branchCount++;
+        try {
+            const syntaxTree = esprima.parseScript(code, { tolerant: true });
+
+            esprimaTraverse(syntaxTree, node => {
+                // Compter les instructions exécutables
+                switch (node.type) {
+                    case 'ExpressionStatement':
+                    case 'VariableDeclaration':
+                    case 'FunctionDeclaration':
+                    case 'ReturnStatement':
+                    case 'BreakStatement':
+                    case 'ContinueStatement':
+                    case 'ThrowStatement':
+                    case 'IfStatement':
+                    case 'ForStatement':
+                    case 'ForInStatement':
+                    case 'ForOfStatement':
+                    case 'WhileStatement':
+                    case 'DoWhileStatement':
+                    case 'SwitchStatement':
+                    case 'TryStatement':
+                        instructionCount++;
+                        break;
+                }
+
+                // Compter les branches
+                switch (node.type) {
+                    case 'IfStatement':
+                    case 'SwitchStatement':
+                    case 'ConditionalExpression':
+                    case 'ForStatement':
+                    case 'ForInStatement':
+                    case 'ForOfStatement':
+                    case 'WhileStatement':
+                    case 'DoWhileStatement':
+                    case 'TryStatement':
+                        branchCount++;
+                        break;
+                }
+            });
+        } catch (error) {
+            console.log("Erreur de syntaxe : " + error.message);
+        }
+
+        return { branchCount, instructionCount };
+    }
+
+    // Fonction de parcours de l'arbre syntaxique Esprima
+    function esprimaTraverse(node, callback) {
+        callback(node);
+        for (let key in node) {
+            if (node.hasOwnProperty(key)) {
+                let child = node[key];
+                if (Array.isArray(child)) {
+                    child.forEach(function(node) {
+                        if (node && typeof node.type === 'string') {
+                            esprimaTraverse(node, callback);
+                        }
+                    });
+                } else if (child && typeof child.type === 'string') {
+                    esprimaTraverse(child, callback);
+                }
             }
-        });
-
-        return { branchCount };
+        }
     }
 
     // Gestionnaire d'événement pour l'exécution du code
     document.getElementById('runCode').addEventListener('click', function() {
         const code = editor.getValue();
 
-        // Réinitialiser la console
+        // Réinitialiser la sortie de la console
         consoleElement.textContent = "";
 
         try {
             // Exécution sécurisée du code utilisateur
-            eval(code);
+            (function() {
+                'use strict';
+                eval(code);
+            })();
         } catch (error) {
             console.log("Erreur : " + error.message);
         }
 
-        // Afficher la couverture des branches
-        const coverage = countBranches(code);
-        document.getElementById('coverage').textContent = `Nombre total de branches : ${coverage.branchCount}`;
+        // Afficher la couverture des branches et instructions
+        const coverage = countBranchesAndInstructions(code);
+        document.getElementById('coverage').textContent = `Nombre total d'instructions : ${coverage.instructionCount}\nNombre total de branches : ${coverage.branchCount}`;
     });
 </script>
 
