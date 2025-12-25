@@ -198,7 +198,7 @@
 
         // Afficher la couverture des branches et instructions
         const coverage = countBranchesAndInstructions(code);
-        document.getElementById('coverage').textContent = `Nombre total d'instructions : ${coverage.instructionCount}\nNombre total de decisions : ${coverage.branchCount}`;
+        document.getElementById('coverage').textContent = `Nombre total d'instructions : ${coverage.instructionCount}\nNombre total de decisions : ${coverage.branchCount-1}`;
     });
 </script>
 
